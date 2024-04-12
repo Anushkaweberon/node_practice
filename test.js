@@ -2,14 +2,15 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const PDFParser = require('pdf-parse');
 
 const getCurrentYearAndMonth = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() ;
+  const month = now.getMonth();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const bayestMonthName = monthNames[month - 1]; 
-  const carsMonthName = monthNames[month - 2]; 
+  const bayestMonthName = monthNames[month - 1];
+  const carsMonthName = monthNames[month - 2];
   return { bayestMonthName, carsMonthName, year, month };
 };
 
@@ -90,6 +91,26 @@ const createDownloadsDirectory = () => {
   }
 };
 
+const extractInfoFromPDF = async (pdfPath, txtFilePath) => {
+    const { year, bayestMonthName } = getCurrentYearAndMonth();
+    try {
+      const dataBuffer = fs.readFileSync(pdfPath);
+      const pdfText = await PDFParser(dataBuffer);
+      const text = pdfText.text;
+      console.log("Extracted PDF text:", text);
+      fs.writeFileSync(txtFilePath, text);
+      console.log(`PDF content saved to: ${txtFilePath}`);
+      const pdfyear = text.match(year);
+      const month = text.match(bayestMonthName);
+      return { pdfyear, month };
+    } catch (error) {
+      console.error('Error extracting info from PDF:', error);
+      throw error;
+    }
+  };
+  
+  
+
 const validateSVGUrls = async () => {
   try {
     const { year, month } = getCurrentYearAndMonth();
@@ -101,7 +122,11 @@ const validateSVGUrls = async () => {
       const url = checkSVGUrl(year, month, filename);
       const svgFilePath = await downloadSVGFile(url, filename);
       const pdfFilePath = path.join(__dirname, 'downloads', `${filename}.pdf`);
+      const txtFilePath = path.join(__dirname, 'downloads', `${filename}.txt`); 
       await convertSVGToPDF(svgFilePath, pdfFilePath);
+      await extractInfoFromPDF(pdfFilePath, txtFilePath); 
+      const pdfInfo = await extractInfoFromPDF(pdfFilePath, txtFilePath);
+      console.log(`${filename} PDF info - Year: ${pdfInfo.year}, Month: ${pdfInfo.month}`);
     }
   } catch (error) {
     console.error('Error:', error);
