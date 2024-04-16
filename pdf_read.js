@@ -10,7 +10,7 @@ function findValidYearAndMonth(text) {
     const bayestMonthName = monthNames[month - 1];
     const yearMatches = text.includes(year) ;
     const monthMatch = text.includes(bayestMonthName);
-    // console.log(yearMatches, year)
+    console.log(yearMatches, year)
 
     return { yearMatches, monthMatch };
 }
