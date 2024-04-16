@@ -12,7 +12,7 @@ function findValidYearAndMonth(text) {
     const monthMatch = text.includes(bayestMonthName);
     // console.log(yearMatches, year)
 
-    return { yearMatches: yearMatches, monthMatch };
+    return { yearMatches, monthMatch };
 }
 
 const pdfPath = 'Dublin_detached.pdf';
