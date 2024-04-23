@@ -1,56 +1,58 @@
 const fs = require('fs');
 const pdf = require('pdf-parse');
+const yargs = require('yargs');
 
-function findValidYearAndMonth(text) {
-    const now = new Date();
-      const year = now.getFullYear().toString();
-    // const year = 2022;
-    const month = now.getMonth();
+const argv = yargs(process.argv.slice(2))
+    .usage('Usage: $0 <pdfPath>')
+    .demandCommand(1, 'Please provide the path to the PDF file.')
+    .argv;
+
+    function findValidYearAndMonth(text) {
+        const today = new Date();
+        let year = today.getFullYear().toString();
     
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const bayestMonthName = monthNames[month - 1];
-    const carsMonthName = monthNames[month - 2];
+        const previousMonth = new Date(today);
+        previousMonth.setMonth(today.getMonth() - 1);
+        const bayeastMonthName = previousMonth.toLocaleString('default', { month: 'long' });
+        let previousYear = previousMonth.getFullYear().toString();
+    
+        const twoMonthsAgo = new Date(today);
+        twoMonthsAgo.setMonth(today.getMonth() - 2);
+        const carsMonthName = twoMonthsAgo.toLocaleString('default', { month: 'long' });
+        let twoMonthsAgoYear = twoMonthsAgo.getFullYear().toString();
+    
+        const bayeastMonthMatch = text.includes(bayeastMonthName);
+        let previousYearMatch = false;
+        let twoMonthsAgoYearMatch = false;
+    
+        if (bayeastMonthMatch) {
+            previousYearMatch = text.includes(previousYear);
+        } else {
+            twoMonthsAgoYearMatch = text.includes(twoMonthsAgoYear);
+        }
+    
+        const carsMonthMatch = text.includes(carsMonthName);
+        console.log(`bayeast month ${bayeastMonthMatch}, cars month ${carsMonthMatch}, previous year ${previousYearMatch}, two months ago year ${twoMonthsAgoYearMatch}`)
+    
+        return { year, previousYearMatch, bayeastMonthMatch, twoMonthsAgoYearMatch,carsMonthMatch };
+    }
+    
+    
+    
+const pdfPath = argv._[0];
 
-    const yearMatches = text.includes(year);
-    const bayestMonthMatch = text.includes(bayestMonthName);
-    const carsMonthMatch = text.includes(carsMonthName);
-
-    return { yearMatches, bayestMonthMatch, carsMonthMatch };
-}
-
-const pdfPath1 = 'contra_costa_detached.pdf';
-const pdfPath2 = 'Dublin_detached.pdf';
-
-fs.readFile(pdfPath1, async (error, data) => {
+fs.readFile(pdfPath, async (error, data) => {
     if (error) {
-        console.error('Error reading the first PDF file:', error);
+        console.error('Error reading the PDF file:', error);
         return;
     }
 
     try {
         const pdfData = await pdf(data);
-        const text = pdfData.text;
-        const { yearMatches, carsMonthMatch } = findValidYearAndMonth(text);
+        const { year, previousYearMatch, bayeastMonthMatch, twoMonthsAgoYearMatch,carsMonthMatch } = findValidYearAndMonth(pdfData.text, pdfPath);
 
-        console.log(`For the first PDF: Year found ${yearMatches ? 'Yes' : 'No'},Cars Month found ${carsMonthMatch ? 'Yes' : 'No'}`);
+        console.log(`For the ${pdfPath}: Year found in CARs stats: ${twoMonthsAgoYearMatch ? 'Yes' : 'No'}, Year found in Bayeast stats: ${previousYearMatch ? 'Yes' : 'No'}, Bayest Month found: ${bayeastMonthMatch ? 'Yes' : 'No'}, Cars Month found: ${carsMonthMatch ? 'Yes' : 'No'}`);
     } catch (err) {
-        console.error('Error parsing the first PDF:', err);
-    }
-});
-
-fs.readFile(pdfPath2, async (error, data) => {
-    if (error) {
-        console.error('Error reading the second PDF file:', error);
-        return;
-    }
-
-    try {
-        const pdfData = await pdf(data);
-        const text = pdfData.text;
-        const { yearMatches, bayestMonthMatch } = findValidYearAndMonth(text);
-
-        console.log(`For the second PDF: Year found ${yearMatches ? 'Yes' : 'No'}, Bayest Month found ${bayestMonthMatch ? 'Yes' : 'No'}`);
-    } catch (err) {
-        console.error('Error parsing the second PDF:', err);
+        console.error('Error parsing the PDF:', err);
     }
 });
