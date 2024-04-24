@@ -3,56 +3,48 @@ const pdf = require('pdf-parse');
 const yargs = require('yargs');
 
 const argv = yargs(process.argv.slice(2))
-    .usage('Usage: $0 <pdfPath>')
-    .demandCommand(1, 'Please provide the path to the PDF file.')
+    .usage('Usage: $0 <pdfPath1> <pdfPath2> <pdfPath3> <pdfPath4> <pdfPath5>')
+    .demandCommand(1, 'Please provide at least one path to the PDF file.')
     .argv;
 
-    function findValidYearAndMonth(text) {
-        const today = new Date();
-        let year = today.getFullYear().toString();
-    
-        const previousMonth = new Date(today);
-        previousMonth.setMonth(today.getMonth() - 1);
-        const bayeastMonthName = previousMonth.toLocaleString('default', { month: 'long' });
-        let previousYear = previousMonth.getFullYear().toString();
-    
-        const twoMonthsAgo = new Date(today);
-        twoMonthsAgo.setMonth(today.getMonth() - 2);
-        const carsMonthName = twoMonthsAgo.toLocaleString('default', { month: 'long' });
-        let twoMonthsAgoYear = twoMonthsAgo.getFullYear().toString();
-    
-        const bayeastMonthMatch = text.includes(bayeastMonthName);
-        let previousYearMatch = false;
-        let twoMonthsAgoYearMatch = false;
-    
-        if (bayeastMonthMatch) {
-            previousYearMatch = text.includes(previousYear);
-        } else {
-            twoMonthsAgoYearMatch = text.includes(twoMonthsAgoYear);
+function findValidYearAndMonth(text) {
+    const today = new Date();
+    let year = today.getFullYear().toString();
+
+    const previousMonth = new Date();
+    previousMonth.setMonth(today.getMonth() - 1);
+    const bayeastStatsMonthName = previousMonth.toLocaleString('default', { month: 'long' });
+    const bayeastStatsYear = previousMonth.getFullYear().toString();
+
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+    const carsMonthStatsName = twoMonthsAgo.toLocaleString('default', { month: 'long' });
+    const carsStatsYear = twoMonthsAgo.getFullYear().toString();
+
+    const BAYEAST_STATS_STRING = `Detached Single-Family Homes${bayeastStatsMonthName}  ${bayeastStatsYear}`
+    const CARS_STATS_STRING = `Trends At A Glance For: ${carsMonthStatsName} ${carsStatsYear}`
+
+    const bayeastStatsMatch = text.includes(BAYEAST_STATS_STRING);
+    const carsStatsMatch = text.includes(CARS_STATS_STRING);
+
+    return { bayeastStatsMatch, carsStatsMatch };
+}
+
+const pdfPaths = argv._;
+
+pdfPaths.forEach(async (pdfPath) => {
+    fs.readFile(pdfPath, async (error, data) => {
+        if (error) {
+            console.error(`Error reading the PDF file ${pdfPath}:`, error);
+            return;
         }
-    
-        const carsMonthMatch = text.includes(carsMonthName);
-        console.log(`bayeast month ${bayeastMonthMatch}, cars month ${carsMonthMatch}, previous year ${previousYearMatch}, two months ago year ${twoMonthsAgoYearMatch}`)
-    
-        return { year, previousYearMatch, bayeastMonthMatch, twoMonthsAgoYearMatch,carsMonthMatch };
-    }
-    
-    
-    
-const pdfPath = argv._[0];
 
-fs.readFile(pdfPath, async (error, data) => {
-    if (error) {
-        console.error('Error reading the PDF file:', error);
-        return;
-    }
-
-    try {
-        const pdfData = await pdf(data);
-        const { year, previousYearMatch, bayeastMonthMatch, twoMonthsAgoYearMatch,carsMonthMatch } = findValidYearAndMonth(pdfData.text, pdfPath);
-
-        console.log(`For the ${pdfPath}: Year found in CARs stats: ${twoMonthsAgoYearMatch ? 'Yes' : 'No'}, Year found in Bayeast stats: ${previousYearMatch ? 'Yes' : 'No'}, Bayest Month found: ${bayeastMonthMatch ? 'Yes' : 'No'}, Cars Month found: ${carsMonthMatch ? 'Yes' : 'No'}`);
-    } catch (err) {
-        console.error('Error parsing the PDF:', err);
-    }
+        try {
+            const pdfData = await pdf(data);
+            const { bayeastStatsMatch, carsStatsMatch } = findValidYearAndMonth(pdfData.text, pdfPath);
+            console.log(`For the ${pdfPath}: CarsStats match ${carsStatsMatch? "yes": "No"}, BayeastStats match ${bayeastStatsMatch? "yes" : "No"}`);
+        } catch (err) { 
+            console.error('Error parsing the PDF:', err);
+        }
+    });
 });
