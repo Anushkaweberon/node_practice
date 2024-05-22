@@ -10,8 +10,8 @@ const filenames = ['contra_costa', 'Dublin', 'Fremont', 'Pleasanton', 'San Ramon
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'anushka@weberon.net',  
-        pass: 'Anushka@123'  
+        user: 'anushka@weberon.net',
+        pass: 'Anushka@123'
     }
 });
 
@@ -46,7 +46,7 @@ async function checkSVGUrl(year, month, filename) {
 function findValidYearAndMonth(text) {
     const today = new Date();
     const previousMonth = new Date();
-    previousMonth.setMonth(today.getMonth() -1);
+    previousMonth.setMonth(today.getMonth() - 1);
     const bayeastStatsMonthName = previousMonth.toLocaleString('default', { month: 'long' });
     const bayeastStatsYear = previousMonth.getFullYear().toString();
 
@@ -64,7 +64,7 @@ function findValidYearAndMonth(text) {
     return { bayeastStatsMatch, carsStatsMatch };
 }
 
-const argv = yargs(process.argv.slice(2))
+const argv = yargs(globalThis.process.argv.slice(2))
     .usage('Usage: $0 <pdfPath1> <pdfPath2> <pdfPath3> <pdfPath4> <pdfPath5>')
     .demandCommand(1, 'Please provide at least one path to the PDF file.')
     .argv;
@@ -77,7 +77,7 @@ async function processPDF(pdfPath) {
         const pdfData = await pdf(data);
         const { bayeastStatsMatch, carsStatsMatch } = findValidYearAndMonth(pdfData.text);
         console.log(`For the ${pdfPath}: CarsStats match ${carsStatsMatch ? "yes" : "No"}, BayeastStats match ${bayeastStatsMatch ? "yes" : "No"}`);
-        
+
         if (bayeastStatsMatch || carsStatsMatch) {
             const subject = `Marketwatch stats pdf is available`;
             const text = `The PDF ${pdfPath} matches the required stats.`;
