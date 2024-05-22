@@ -1,10 +1,9 @@
 {
   "dependencies": {
-    "axios": "^1.6.8",
-    "cheerio": "^1.0.0-rc.12",
-    "pdf-text-extract": "^1.5.0",
-    "svg-to-pdfkit": "^0.1.8",
-    "svg2pdf": "^1.1.1",
-    "xml2js": "^0.6.2"
+    "axios": "^1.7.2",
+    "fs": "^0.0.1-security",
+    "nodemailer": "^6.9.13",
+    "pdf-parse": "^1.1.1",
+    "yargs": "^17.7.2"
   }
 }
