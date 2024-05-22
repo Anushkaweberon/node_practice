@@ -1,16 +1,17 @@
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
+const svg2pdf = require('svg2pdf').setInkscapePath('/path/to/inkscape');
+
 
 const getCurrentYearAndMonth = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() ;
+  const month = now.getMonth();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const bayestMonthName = monthNames[month-1];
   const carsMonthName = monthNames[month-2];
-  // console.log(carsMonthName, bayestMonthName, year);
-  return{bayestMonthName, carsMonthName , year, month}
+  return { bayestMonthName, carsMonthName, year, month };
 };
 
 const checkSVGUrl = (year, month, filename) => {
@@ -26,9 +27,31 @@ const downloadSVGFile = (url, filename) => {
     response.pipe(fileStream);
     fileStream.on('finish', () => {
       console.log(`${filename}.svg downloaded successfully.`);
+      convertSVGtoPDF(filePath, filename);
     });
   }).on('error', (err) => {
     console.error(`Error downloading ${filename}.svg: ${err.message}`);
+  });
+};
+
+const convertSVGtoPDF = (svgFilePath, filename) => {
+  const pdfFilePath = path.join(__dirname, 'downloads', `${filename}.pdf`);
+
+  fs.readFile(svgFilePath, 'utf8', (err, svgContent) => {
+    if (err) {
+      console.error(`Error reading ${filename}.svg: ${err.message}`);
+      return;
+    }
+
+    const pdfStream = fs.createWriteStream(pdfFilePath);
+
+    svg2pdf(svgContent, pdfStream, (error) => {
+      if (error) {
+        console.error(`Error converting ${filename}.svg to PDF: ${error.message}`);
+      } else {
+        console.log(`${filename}.pdf created successfully.`);
+      }
+    });
   });
 };
 
@@ -49,7 +72,6 @@ const validateSVGUrls = () => {
     const url = checkSVGUrl(year, month, filenames[i]);
     downloadSVGFile(url, filenames[i]);
   }
-  
 };
 
 validateSVGUrls();

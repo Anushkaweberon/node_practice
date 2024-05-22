@@ -5,8 +5,12 @@ const path = require('path');
 const getCurrentYearAndMonth = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  return { year, month };
+  const month = now.getMonth();
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const bayestMonthName = monthNames[month-1];
+  const carsMonthName = monthNames[month-2];
+  // console.log(carsMonthName, bayestMonthName, year);
+  return{bayestMonthName, carsMonthName , year, month}
 };
 
 const checkSVGUrl = (year, month, filename) => {
@@ -22,11 +26,33 @@ const downloadSVGFile = (url, filename) => {
     response.pipe(fileStream);
     fileStream.on('finish', () => {
       console.log(`${filename}.svg downloaded successfully.`);
+      readSVGFile(filePath, filename); // Read the downloaded SVG file
     });
   }).on('error', (err) => {
     console.error(`Error downloading ${filename}.svg: ${err.message}`);
   });
 };
+
+const readSVGFile = (filePath, filename) => {
+  fs.readFile(filePath, 'utf-8', (err, data) => {
+    if (err) {
+      console.error(`Error reading ${filename}.svg: ${err.message}`);
+      return;
+    }
+    console.log(`Successfully read ${filename}.svg`);
+    const svgContent = data.toString();
+
+    const { year ,bayestMonthName, carsMonthName } = getCurrentYearAndMonth();
+
+    const yearMatch = svgContent.match("Dublin");
+    // const monthMatch = svgContent.match(monthRegex);
+
+    console.log(svgContent);
+  });
+};
+
+
+
 
 const createDownloadsDirectory = () => {
   const downloadsPath = path.join(__dirname, 'downloads');
@@ -45,7 +71,6 @@ const validateSVGUrls = () => {
     const url = checkSVGUrl(year, month, filenames[i]);
     downloadSVGFile(url, filenames[i]);
   }
-  
 };
 
 validateSVGUrls();
